@@ -1,0 +1,52 @@
+1. Take a TextView with some default text and change text color with three
+different buttons Red, Green, and Blue respectively on button click event
+with linear layout.
+
+2. Take a TextView with some default text and change text font size with
+three different buttons Small, Medium, and Large respectively on button
+click event with linear layout
+
+3. Develop a simple calculator for addition, subtraction, multiplication, and
+division operations using a single textbox.
+
+4. Develop a unit converter using radio button and Textview.
+
+5. Develop an application with checkboxes which display selected items
+into textView and total amount in another textview.
+
+6. Develop an application to transmit student information from one activity
+to other activity.
+
+7. Develop an application for registration of student with five fields Name,
+Age, Address, City, and Phone using editetext. On submit button transfer
+these information and display on another activity.
+
+8. Develop an application which accepts first name and last name with
+different text box and on button click combine first name and last name
+and display it into label second screen.
+
+1. Develop an application for registration of student with five fields Name, Age,
+Address, City, and Phone using. On submit button transfer these information
+and display on another activity.
+
+2. Develop an application to add and remove items to listview at run time.
+
+3. Develop an application to show items in listview and on selection of
+particular item it should start respective activity.
+
+4. Develop an application which shows list of departments in our university, on
+selection of particular department it should show the courses running by the
+respective department and on selection of particular course it should show
+the brief description of the respective course.
+
+5. Develop an application employee information management having the
+functionality of insert, update, delete, display and record navigation
+operations on SQLite database.
+
+6. Create an application that will change color of the screen, based on selected
+options from the menu.
+
+7. Create an application that will pass some number to the next screen , and on
+the next screen that number of items should be display in the list.
+
+8. Create an application that will create database with table of User credential.

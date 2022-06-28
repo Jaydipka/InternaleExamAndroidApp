@@ -1,0 +1,378 @@
+=====
+Db.java
+=====
+public class Db extends SQLiteOpenHelper {
+    public Db(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
+        super(context, "emp_DB", null, 1);
+    }
+
+    public void addData(String name, String Designation, String Phone, String Email) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("empName", name);
+        cv.put("empDesignation", Designation);
+        cv.put("empPhone",Phone);
+        cv.put("empEmail",Email);
+        db.insert("emp", null, cv);
+        db.close();
+    }
+
+    public Cursor fetchAllData() {
+        SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from emp", null, null);
+        return cursor;
+    }
+    public  Cursor searchEmp(String empName){
+        SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("select * from emp where empName=?",new String[]{empName});
+        return cursor;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase sqLiteDatabase) {
+        sqLiteDatabase.execSQL("create table emp(empId integer primary key autoincrement, empName text,empDesignation text,empPhone text,empEmail text )");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS emp");
+        onCreate(sqLiteDatabase);
+    }
+
+=====
+main activity
+=====
+public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected( MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.insert) {
+            Intent i = new Intent(MainActivity.this, InsertActivity.class);
+            startActivity(i);
+            return true;
+        }
+        else if (id == R.id.show) {
+            Intent i = new Intent(MainActivity.this, ShowActivity.class);
+            startActivity(i);
+            return true;
+        }
+        else
+        if (id == R.id.search) {
+            Intent i = new Intent(MainActivity.this, SearchActivity.class);
+            startActivity(i);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+=====
+insertactivity
+=====
+public class InsertActivity extends AppCompatActivity {
+    EditText id, name, phone, email;
+    AutoCompleteTextView designation;
+    Button save;
+    Db obj = new Db(this, "emp_DB", null,1);
+    String[] arr = { "Manager", "Executive","Clerk",
+            "Chief- Executive", "Senior-Clerk"};
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_insert);
+
+        id=findViewById(R.id.empIdTxt);
+        name=findViewById(R.id.empNameTxt);
+        designation=findViewById(R.id.empDesingnationTxt);
+        phone=findViewById(R.id.empPhoneTxt);
+        email=findViewById(R.id.empEmailTxt);
+        save=findViewById(R.id.saveBtn);
+
+        designation=findViewById(R.id.empDesingnationTxt);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>
+                (this,android.R.layout.select_dialog_item, arr);
+
+        designation.setThreshold(2);
+        designation.setAdapter(adapter);
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                obj.addData(
+                        name.getText().toString(),
+                        designation.getText().toString(),
+                        phone.getText().toString(),
+                        email.getText().toString()
+
+                        );
+                Toast.makeText(InsertActivity.this, "Record Inserted..", Toast.LENGTH_LONG).show();
+            }
+
+        });
+    }
+======
+search
+======
+public class SearchActivity extends AppCompatActivity {
+    TextView search;
+    Button btn;
+    Db db = new Db(this, null, null,1);
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_search);
+
+        search=findViewById(R.id.searchTxt);
+        btn=findViewById(R.id.button);
+
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Cursor cursor = db.searchEmp(search.getText().toString());
+                StringBuffer buffer = new StringBuffer();
+                AlertDialog.Builder builder = new AlertDialog.Builder(SearchActivity.this);
+                   while (cursor.moveToNext()) {
+                    buffer.append("empId :" + cursor.getString(0) + "\n");
+                    buffer.append("empName :" + cursor.getString(1) + "\n");
+                    buffer.append("empDesingnation :" + cursor.getString(2) + "\n");
+                    buffer.append("empPhone :" + cursor.getString(3) + "\n");
+                    buffer.append("empEmail :" + cursor.getString(4) + "\n");
+                    buffer.append("\n");
+                }
+
+                builder.setCancelable(true);
+                builder.setTitle("Employee Records");
+                builder.setMessage(buffer.toString());
+                builder.show();
+            }
+        });
+    }
+}
+=====
+showactivity
+=====
+public class ShowActivity extends AppCompatActivity {
+    Db obj = new Db(this, "emp_DB", null, 1);
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_show);
+
+        getData();
+    }
+
+
+    private void getData() {
+        StringBuffer buffer = new StringBuffer();
+        AlertDialog.Builder builder = new AlertDialog.Builder(ShowActivity.this);
+        Cursor cursor = obj.fetchAllData();
+        while (cursor.moveToNext()) {
+            buffer.append("empId :" + cursor.getString(0) + "\n");
+            buffer.append("empName :" + cursor.getString(1) + "\n");
+            buffer.append("empDesignation :" + cursor.getString(2) + "\n");
+            buffer.append("empPhone :" + cursor.getString(3) + "\n");
+            buffer.append("empEmail :" + cursor.getString(4) + "\n");
+            buffer.append("\n");
+        }
+
+        builder.setCancelable(true);
+        builder.setTitle("Employee Records");
+        builder.setMessage(buffer.toString());
+        builder.show();
+
+    }
+}
+====
+insert.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".InsertActivity">
+
+    <EditText
+        android:id="@+id/empEmailTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:ems="10"
+        android:hint="Emp_Email"
+        android:inputType="textPersonName"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/empPhoneTxt" />
+
+    <EditText
+        android:id="@+id/empPhoneTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:ems="10"
+        android:hint="Emp_Phone"
+        android:inputType="textPersonName"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/empDesingnationTxt" />
+
+    <EditText
+        android:id="@+id/empNameTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:ems="10"
+        android:hint="Emp_Name"
+        android:inputType="textPersonName"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/empIdTxt" />
+
+    <Button
+        android:id="@+id/saveBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.532"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/empEmailTxt"
+        app:layout_constraintVertical_bias="0.112" />
+
+    <EditText
+        android:id="@+id/empIdTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="116dp"
+        android:ems="10"
+        android:hint="Emp_Id"
+        android:inputType="textPersonName"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <AutoCompleteTextView
+        android:id="@+id/empDesingnationTxt"
+        android:layout_width="212dp"
+        android:layout_height="51dp"
+        android:layout_marginTop="12dp"
+        android:hint="Emp_Desingnation"
+        android:minHeight="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/empNameTxt" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+====
+main.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+
+    />
+====
+search.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SearchActivity">
+
+    <EditText
+        android:id="@+id/searchTxt"
+        android:layout_width="286dp"
+        android:layout_height="46dp"
+        android:layout_marginTop="200dp"
+        android:ems="10"
+        android:hint="Search Emp"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="TouchTargetSizeCheck" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Search"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/searchTxt"
+        app:layout_constraintVertical_bias="0.338" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+=====
+show.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tv"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ShowActivity"/>
+=======
+menu
+
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/insert"
+        android:title="insert"
+        android:orderInCategory="100"
+        app:showAsAction="never"
+        />
+
+    <item
+        android:id="@+id/show"
+        android:title="show"
+        android:orderInCategory="100"
+        app:showAsAction="never"
+        />
+
+    <item
+        android:id="@+id/search"
+        android:title="search"
+        android:orderInCategory="100"
+        app:showAsAction="never"
+        />
+</menu>

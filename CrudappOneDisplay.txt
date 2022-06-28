@@ -1,0 +1,335 @@
+Db.java 
+============================================================================================================
+
+public class Db extends SQLiteOpenHelper {
+    public Db(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
+        super(context, "Employee", factory, 1);
+    }
+       @Override
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL("create table if not exists emp(id integer primary key autoincrement,name text,age integer,designation text)");
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int i, int i1) {
+            onCreate(db);
+        }
+
+        public void addData(String name, int age, String designation) {
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put("name", name);
+            cv.put("age", age);
+            cv.put("designation", designation);
+            db.insert("emp", null, cv);
+            db.close();
+        }
+
+        public boolean updateData(String id, String name, int age, String designation) {
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.put("name", name);
+            cv.put("age", age);
+            cv.put("designation", designation);
+            Cursor cursor = db.rawQuery("select * from emp where id = ?", new String[]{id});
+
+            if (cursor.getCount() > 0) {
+                int result = db.update("emp", cv, "id=?", new String[]{id});
+                if (result == 1) {
+                    db.close();
+                    return true;
+                }
+            }
+            db.close();
+            return false;
+        }
+
+        public boolean removeData(String id) {
+            SQLiteDatabase db = this.getWritableDatabase();
+            Cursor cursor = db.rawQuery("select * from emp where id = ?", new String[]{id});
+
+            if (cursor.getCount() > 0) {
+                int result = db.delete("emp", "id=?", new String[]{id});
+                if (result == 1) {
+                    db.close();
+                    return true;
+                }
+            }
+            db.close();
+            return false;
+        }
+
+
+        public Cursor fetchAllData() {
+            SQLiteDatabase sqLiteDatabase = this.getReadableDatabase();
+            Cursor cursor = sqLiteDatabase.rawQuery("select * from emp", null, null);
+            return cursor;
+        }
+}
+
+============
+MainActivity
+============
+
+Db obj = new Db(this, null, null, 1);
+    Button getDataBtn, insertBtn, updateBtn, removeBtn;
+    EditText nameTxt, ageTxt, designationTxt, idTxt;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        updateBtn = findViewById(R.id.updateBtn);
+        removeBtn = findViewById(R.id.removeBtn);
+        getDataBtn = findViewById(R.id.getDataBtn);
+        insertBtn = findViewById(R.id.insertBtn);
+        ageTxt = findViewById(R.id.textBoxAge);
+        designationTxt = findViewById(R.id.textBoxDesignation);
+        nameTxt = findViewById(R.id.textBoxName);
+        idTxt = findViewById(R.id.textBoxId);
+
+
+        insertBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                obj.addData(
+                        nameTxt.getText().toString(),
+                        Integer.parseInt(ageTxt.getText().toString()),
+                        designationTxt.getText().toString()
+                );
+                Toast.makeText(MainActivity.this, "Record Inserted..", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        updateBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                boolean result = obj.updateData(
+                        idTxt.getText().toString(),
+                        nameTxt.getText().toString(),
+                        Integer.parseInt(ageTxt.getText().toString()),
+                        designationTxt.getText().toString()
+                );
+                if (result){
+                    Toast.makeText(MainActivity.this, "Updated SuccessFully", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(MainActivity.this, "Record Not Exists", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        });
+
+        removeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean result = obj.removeData(idTxt.getText().toString());
+                if (result){
+                    Toast.makeText(MainActivity.this, "Record Deleted SuccessFully", Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(MainActivity.this, "Record Not Exists", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        getDataBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getData();
+            }
+        });
+    }
+
+    private void getData() {
+        StringBuffer buffer = new StringBuffer();
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        Cursor cursor = obj.fetchAllData();
+        while (cursor.moveToNext()) {
+            buffer.append("Id :" + cursor.getString(0) + "\n");
+            buffer.append("Name :" + cursor.getString(1) + "\n");
+            buffer.append("Age :" + cursor.getString(2) + "\n");
+            buffer.append("Designation :" + cursor.getString(3) + "\n");
+            buffer.append("\n");
+        }
+        builder.setCancelable(true);
+        builder.setTitle("Employee Records");
+        builder.setMessage(buffer.toString());
+        builder.show();
+    }
+
+============
+XML File
+============
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dp">
+
+            <EditText
+                android:id="@+id/textBoxId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="48dp"
+                android:layout_marginEnd="36dp"
+                android:ems="10"
+                android:hint="id for update or delete"
+                android:inputType="number|textPersonName"
+                android:minHeight="48dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="60dp"
+                android:text="Emp Id :"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toStartOf="@+id/textBoxName"
+                app:layout_constraintHorizontal_bias="0.477"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <Button
+                android:id="@+id/getDataBtn"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="80dp"
+                android:text="Get All Data"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.466"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/textBoxDesignation" />
+
+            <Button
+                android:id="@+id/insertBtn"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Insert"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.459"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/getDataBtn" />
+
+            <Button
+                android:id="@+id/updateBtn"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="update"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.461"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/insertBtn" />
+
+            <Button
+                android:id="@+id/removeBtn"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="92dp"
+                android:text="Remove"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.462"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/insertBtn" />
+
+            <EditText
+                android:id="@+id/textBoxName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="120dp"
+                android:layout_marginEnd="32dp"
+                android:ems="10"
+                android:hint="Enter Name"
+                android:inputType="textPersonName"
+                android:minHeight="48dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <EditText
+                android:id="@+id/textBoxDesignation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:layout_marginEnd="28dp"
+                android:ems="10"
+                android:hint="Enter Designation"
+                android:inputType="textPersonName"
+                android:minHeight="48dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textBoxAge" />
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="56dp"
+                android:text="Designation :"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toStartOf="@+id/textBoxDesignation"
+                app:layout_constraintHorizontal_bias="0.605"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="52dp"
+                android:text="Age :"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toStartOf="@+id/textBoxAge"
+                app:layout_constraintHorizontal_bias="0.569"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+            <EditText
+                android:id="@+id/textBoxAge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:layout_marginEnd="32dp"
+                android:ems="10"
+                android:hint="Enter Age"
+                android:inputType="number|textPersonName"
+                android:minHeight="48dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textBoxName" />
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="132dp"
+                android:text="Name :"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toStartOf="@+id/textBoxName"
+                app:layout_constraintHorizontal_bias="0.548"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
